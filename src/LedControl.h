@@ -1,13 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-
-#define R_PIN  8
-#define G_PIN 24
-#define B_PIN 26
-
-#define ANALRES 10
-#define ANALFRQ 100
+#include "variables.h"
 
 struct Color {
     uint8_t res; // Resolution of the color in bits (8 -> 255, 10 -> 1024)

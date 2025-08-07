@@ -3,7 +3,7 @@
 // HTTP Server
 WebServer server(80);
 
-Button onOffButton(9);
+Button onOffButton(BUTTON_PIN);
 
 void setup() {
     // PWM Variables Setup

@@ -42,6 +42,8 @@ void clearStateMem(PatternState& normState) {
 
 void setLedOn(){
     state.power = true;
+    // change the 
+    state.curColorPlay = millis();
 }
 
 void setLedOff(){
