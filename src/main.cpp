@@ -3,51 +3,31 @@
 //
 #include "main.h"
 
-#include <WiFi.h>
-#include <WebServer.h>
-
 WebServer server(80);
 
-void res(){
-    int x = server.args();
-
-    String b;
-    for (int i = 0; i < x; i++) {
-        String v = server.arg(i);
-        int v2 = v.toInt();
-        
-        b += v;
-        b += '|';
-        b += server.argName(i);
-        b += '|';
-    }
-    
-
-    server.send(200, "text/plain", b);
-}
-
 void setup() {
+    Serial.begin(9600);
+    analogWriteFrequency(ANALFRQ);
+    analogWriteResolution(ANALRES);
+
+    setLeds({8, 255, 0, 0});
+    
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-    }
+    while (WiFi.status() != WL_CONNECTED) { delay(500); }
 
-    server.on("/lights", HTTP_POST, res);
+    server.on("/static_color", HTTP_POST, postStaticColor);
+    server.on("/dynamic_color", HTTP_POST, postDynamicColor);
+    server.on("/state", HTTP_GET, getState);
 
-    server.on("/inline", [](){
-        server.send(200, "text/plain", "this works as well");
-    });
-
-      server.onNotFound([](){
-        server.send(404, "text/plain", "Error 404");
-    });
-    
     server.begin();
+
+    setDefaultState();
 }
 
 
 void loop() {
     server.handleClient();
+    updateState();
+    applyState();
 }
-
