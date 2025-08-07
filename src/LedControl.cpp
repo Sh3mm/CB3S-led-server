@@ -213,6 +213,10 @@ String getStateJson(){
     return message;
 }
 
+String getPowerJson() { return String() + "{\"power\":" + state.power + "}"; }
+
+bool getPower() { return state.power; }
+
 void setLeds(Color color) {
     analogWrite(R_PIN, mapValRes(color.r, color.res));
     analogWrite(G_PIN, mapValRes(color.g, color.res));

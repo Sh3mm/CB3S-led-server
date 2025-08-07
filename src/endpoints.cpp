@@ -97,3 +97,7 @@ void postInteruptColor() {
 void getState() {
     server.send(200, "application/json", getStateJson());
 }
+
+void getPowerState() {
+    server.send(200, "application/json", getPowerJson());
+}

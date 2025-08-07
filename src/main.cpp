@@ -3,6 +3,8 @@
 // HTTP Server
 WebServer server(80);
 
+Button onOffButton(9);
+
 void setup() {
     // PWM Variables Setup
     analogWriteFrequency(ANALFRQ);
@@ -18,6 +20,7 @@ void setup() {
 
     // GET Requests Callbacks
     server.on("/state", HTTP_GET, getState);
+    server.on("/power", HTTP_GET, getPowerState);
 
     // POST Requests Callbacks
     server.on("/on", HTTP_POST, postOn);
@@ -28,6 +31,8 @@ void setup() {
 
     // HTTP Server Startup
     server.begin();
+
+    onOffButton.begin();
 
     // Seting default colors
     setDefaultState();
@@ -41,4 +46,10 @@ void loop() {
     // Color Change
     updateState();
     applyState();
+
+    // turn on and off using the button
+    if(onOffButton.pressed()) {
+        if(getPower()) { setLedOff(); }
+        else { setLedOn(); }
+    }
 }

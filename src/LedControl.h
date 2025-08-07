@@ -46,6 +46,9 @@ void setDefaultState();
 
 // External Utils
 String getStateJson();
+String getPowerJson();
+
+bool getPower();
 void setLeds(Color color);
 
 // Apply State

@@ -13,4 +13,6 @@ void postOff();
 void postStaticColor();
 void postDynamicColor();
 void postInteruptColor();
+
 void getState();
+void getPowerState();
