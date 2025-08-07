@@ -9,6 +9,7 @@ void setup() {
     analogWriteResolution(ANALRES);
 
     // Initial "No Connection" Color
+    setLedOn();
     setLeds({10, 512, 0, 0});
     
     // Connection to Wifi

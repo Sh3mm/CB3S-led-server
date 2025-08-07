@@ -31,16 +31,22 @@ void copyState(PatternState& from, PatternState& to) {
         to.curColorPlay = millis() + to.patern.pauseTimes[state.curColor];
 }
 
-void setLeds(Color color) {
-    analogWrite(R_PIN, mapValRes(color.r, color.res));
-    analogWrite(G_PIN, mapValRes(color.g, color.res));
-    analogWrite(B_PIN, mapValRes(color.b, color.res));
-}
-
 void clearStateMem(PatternState& normState) {
     delete normState.patern.colors;
     delete normState.patern.pauseTimes;
     delete normState.patern.transTimes;
+}
+/******************
+*  Power Option   *
+*******************/
+
+void setLedOn(){
+    state.power = true;
+}
+
+void setLedOff(){
+    state.power = false;
+    setLeds({8, 0, 0, 0});
 }
 
 /******************
@@ -53,11 +59,13 @@ void setStaticColor(Color color) {
     // releasing old memory
     clearStateMem(normState);
 
+    // setting up the pattern
     normState.patern.length = 1;
     normState.patern.colors = new Color[1] {color,};
     normState.patern.pauseTimes = new unsigned long[1] {0,};
     normState.patern.transTimes = new unsigned long[1] {0,};
     
+    // resetting the state
     normState.curColor = 0;
     normState.curColorPlay = 0;
     normState.isStatic = true;
@@ -132,14 +140,18 @@ void updateState() {
     state.curColorPlay = changeTime + state.patern.pauseTimes[state.curColor];
 }
 
-Color getMidColor(long now){
+Color getTransColor(long now){
     uint8_t curColorIndex  = state.curColor;
+    // If the current color is the last one, the next one should be the first
     uint8_t nextColorIndex = ((state.curColor + 1) == state.patern.length) ? 0 : state.curColor + 1;
 
     Color curColor  = state.patern.colors[curColorIndex];
     Color nextColor = state.patern.colors[nextColorIndex];
 
+    // The color ratio between the curent and next color: (now - transition change) / transition time
     double timeDist = ((double)now - (double)state.curColorPlay) / (double)state.patern.transTimes[curColorIndex];
+    
+    // change the color in a linear maner: cur + (ratio * (next - cur))
     Color midColor = {
         curColor.res,
         curColor.r + (long)(timeDist * ((double)nextColor.r - (double)curColor.r)),
@@ -151,7 +163,10 @@ Color getMidColor(long now){
 }
 
 void applyState() {
-    if(state.staticSet) { return; }
+    // If the state is static and already set or the power is off, don't do anything
+    if(state.staticSet || !state.power) { return; }
+    
+    // If the state is static and not set yet, set the color and return
     if(state.isStatic ) { 
         setLeds(state.patern.colors[0]); 
         state.staticSet = true;
@@ -160,15 +175,14 @@ void applyState() {
 
     long now = millis();
 
-    // The state is in a pause
+    // The state is in a pause, set to the corect color and return
     if(state.curColorPlay > now) { 
         setLeds(state.patern.colors[state.curColor]);
         return;
     }
 
-    Color midColor = getMidColor(now);
-
-    setLeds(midColor);
+    // Set the led color to the correct transition color
+    setLeds(getTransColor(now));
 }
 
 /******************
@@ -197,4 +211,10 @@ String getStateJson(){
     message = message + "\"curColor\": " + state.curColor + "}";
 
     return message;
+}
+
+void setLeds(Color color) {
+    analogWrite(R_PIN, mapValRes(color.r, color.res));
+    analogWrite(G_PIN, mapValRes(color.g, color.res));
+    analogWrite(B_PIN, mapValRes(color.b, color.res));
 }

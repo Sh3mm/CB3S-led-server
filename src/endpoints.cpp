@@ -1,24 +1,27 @@
 # include "endpoints.h"
 
 long getLongParam(String name, long defaultVal = 0) {
-
     String val = server.arg(name);
+    // If the value is absent return the default
     if(val == ""  ) { return defaultVal; }
+    // Return 0 for the special case '0' since toInt will also give 0 in case of an error
     if(val == "0" ) { return 0         ; }
     
     long intVal = val.toInt();
+    // If the value doesn't have numbers, return the defaut value
     if(intVal == 0) { return defaultVal; }
     
+    // return the value
     return intVal;
 }
 
 void postOn() {
-    setDefaultState();
-    server.send(200, "application/json", getStateJson());
+    setLedOn();
+    server.send(200, "text/plain", "On");
 }
 
 void postOff() {
-    setStaticColor({8,0,0,0});
+    setLedOff();
     server.send(200, "text/plain", "Off");
 }
 
