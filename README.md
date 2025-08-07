@@ -24,6 +24,9 @@ The code depends on [libretiny](https://docs.libretiny.eu/).
 // PWM configs
 #define ANALRES 10
 #define ANALFRQ 100
+
+// Button configs
+#define LONG_CLICK 5000
 ```  
 
 2. Upload the project to the chip using [platformIO](https://platformio.org/)

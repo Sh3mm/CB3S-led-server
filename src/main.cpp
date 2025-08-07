@@ -3,7 +3,16 @@
 // HTTP Server
 WebServer server(80);
 
-Button onOffButton(BUTTON_PIN);
+Button2 onOffButton;
+
+void buttonClick(Button2& b){
+    if(getPower()) { setLedOff(); }
+    else           { setLedOn();  }
+}
+
+void buttonLongClick(Button2& b){
+    setup();
+}
 
 void setup() {
     // PWM Variables Setup
@@ -32,7 +41,12 @@ void setup() {
     // HTTP Server Startup
     server.begin();
 
-    onOffButton.begin();
+    // Button setup
+    onOffButton.setTapHandler(buttonClick);
+    onOffButton.setLongClickDetectedHandler(buttonLongClick);
+    onOffButton.setLongClickTime(LONG_CLICK); // setting the long click time
+    
+    onOffButton.begin(BUTTON_PIN);
 
     // Seting default colors
     setDefaultState();
@@ -47,9 +61,6 @@ void loop() {
     updateState();
     applyState();
 
-    // turn on and off using the button
-    if(onOffButton.pressed()) {
-        if(getPower()) { setLedOff(); }
-        else { setLedOn(); }
-    }
+    // Button check
+    onOffButton.loop();
 }
