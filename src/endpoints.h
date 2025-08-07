@@ -5,8 +5,12 @@
 
 #include "LedControl.h"
 
+// The server is defined in main.cpp
 extern WebServer server;
 
+void postOn();
+void postOff();
 void postStaticColor();
 void postDynamicColor();
+void postInteruptColor();
 void getState();

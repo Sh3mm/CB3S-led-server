@@ -1,33 +1,43 @@
-//
-// Created by sh3mm on 8/4/25.
-//
 #include "main.h"
 
+// HTTP Server
 WebServer server(80);
 
 void setup() {
-    Serial.begin(9600);
+    // PWM Variables Setup
     analogWriteFrequency(ANALFRQ);
     analogWriteResolution(ANALRES);
 
-    setLeds({8, 255, 0, 0});
+    // Initial "No Connection" Color
+    setLeds({10, 512, 0, 0});
     
+    // Connection to Wifi
     WiFi.begin(WIFI_SSID, WIFI_PASS);
-
     while (WiFi.status() != WL_CONNECTED) { delay(500); }
 
-    server.on("/static_color", HTTP_POST, postStaticColor);
-    server.on("/dynamic_color", HTTP_POST, postDynamicColor);
+    // GET Requests Callbacks
     server.on("/state", HTTP_GET, getState);
 
+    // POST Requests Callbacks
+    server.on("/on", HTTP_POST, postOn);
+    server.on("/off", HTTP_POST, postOff);
+    server.on("/static_color", HTTP_POST, postStaticColor);
+    server.on("/dynamic_color", HTTP_POST, postDynamicColor);
+    server.on("/interupt_color", HTTP_POST, postInteruptColor);
+
+    // HTTP Server Startup
     server.begin();
 
+    // Seting default colors
     setDefaultState();
 }
 
 
 void loop() {
+    // HTTP Updates
     server.handleClient();
+    
+    // Color Change
     updateState();
     applyState();
 }

@@ -12,6 +12,16 @@ long getLongParam(String name, long defaultVal = 0) {
     return intVal;
 }
 
+void postOn() {
+    setDefaultState();
+    server.send(200, "application/json", getStateJson());
+}
+
+void postOff() {
+    setStaticColor({8,0,0,0});
+    server.send(200, "text/plain", "Off");
+}
+
 void postStaticColor() {
 
     Color color;
@@ -22,24 +32,12 @@ void postStaticColor() {
     color.res = getLongParam("res", 8);
 
     setStaticColor(color);
-    server.send(200, "text/plain", getStateString());
+    server.send(200, "application/json", getStateJson());
 }
 
-void postDynamicColor() {
-
-    if (!server.hasArg("colorNum")){
-        server.send(400, "text/plain", "missing 'colorNum' parameter");
-        return;
-    }
-    
-    uint8_t colorNum = server.arg("colorNum").toInt();
-    if (colorNum == 0){
-        server.send(400, "text/plain", "the value of the 'colorNum' parameter is not valid");
-        return;
-    }
-
+ColorPattern extractPattern() {
+    uint8_t colorNum   = server.arg("colorNum").toInt();
     uint8_t resolution = server.hasArg("res") ? server.arg("res").toInt() : 8;
-
 
     ColorPattern pattern;
     pattern.length = colorNum;
@@ -57,11 +55,42 @@ void postDynamicColor() {
         pattern.transTimes[i] = getLongParam(String("trans") + i, 0);
     }
     
-    setDynamicColor(pattern);
-    server.send(200, "text/plain", getStateString());
+    return pattern;
+}
+
+void postDynamicColor() {
+    if (!server.hasArg("colorNum")){
+        server.send(400, "text/plain", "missing 'colorNum' parameter");
+        return;
+    }
+    
+    uint8_t colorNum = server.arg("colorNum").toInt();
+    if (colorNum == 0){
+        server.send(400, "text/plain", "the value of the 'colorNum' parameter is not valid");
+        return;
+    }
+
+    setDynamicColor(extractPattern());
+    server.send(200, "application/json", getStateJson());
+}
+
+void postInteruptColor() {
+    if (!server.hasArg("colorNum")){
+        server.send(400, "text/plain", "missing 'colorNum' parameter");
+        return;
+    }
+    
+    uint8_t colorNum = server.arg("colorNum").toInt();
+    if (colorNum == 0){
+        server.send(400, "text/plain", "the value of the 'colorNum' parameter is not valid");
+        return;
+    }
+
+    setInteruptColor(extractPattern());
+    server.send(200, "application/json", getStateJson());
 }
 
 
 void getState() {
-    server.send(200, "text/plain", getStateString());
+    server.send(200, "application/json", getStateJson());
 }

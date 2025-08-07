@@ -38,11 +38,10 @@ void setLeds(Color color);
 
 void setStaticColor(Color color);
 void setDynamicColor(ColorPattern color);
-void setInterruptColor(ColorPattern color);
+void setInteruptColor(ColorPattern color);
 void setDefaultState();
 
-double getTimeDist(long now);
-String getStateString();
+String getStateJson();
 
 void updateState();
 void applyState();

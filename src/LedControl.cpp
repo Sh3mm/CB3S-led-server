@@ -1,18 +1,34 @@
 #include "LedControl.h"
 
+/******************
+*  Sate Machines  *
+*******************/
 
 PatternState state;
 PatternState stateBuffer;
 
 
+/******************
+* Internal Utils  *
+*******************/
+
 template<typename T> T clamp(T val, T mn, T mx){ return std::max(std::min(val, mx), mn);}
 
 int mapValRes(int val, uint8_t in_res) {
     return map(
-        val, 
-        0, 2 << (in_res  - 1), 
+        val,
+        0, 2 << (in_res  - 1),
         0, 2 << (ANALRES - 1)
     );
+}
+
+void copyState(PatternState& from, PatternState& to) {
+        to.interupt     = false;
+        to.staticSet    = false;
+        to.isStatic     = from.isStatic;
+        to.patern       = from.patern;
+        to.curColor     = from.curColor;
+        to.curColorPlay = millis() + to.patern.pauseTimes[state.curColor];
 }
 
 void setLeds(Color color) {
@@ -21,13 +37,21 @@ void setLeds(Color color) {
     analogWrite(B_PIN, mapValRes(color.b, color.res));
 }
 
+void clearStateMem(PatternState& normState) {
+    delete normState.patern.colors;
+    delete normState.patern.pauseTimes;
+    delete normState.patern.transTimes;
+}
+
+/******************
+*  Pattern Change *
+*******************/
+
 void setStaticColor(Color color) {
     PatternState& normState = state.interupt ? stateBuffer : state;
 
     // releasing old memory
-    delete normState.patern.colors;
-    delete normState.patern.pauseTimes;
-    delete normState.patern.transTimes;
+    clearStateMem(normState);
 
     normState.patern.length = 1;
     normState.patern.colors = new Color[1] {color,};
@@ -37,6 +61,7 @@ void setStaticColor(Color color) {
     normState.curColor = 0;
     normState.curColorPlay = 0;
     normState.isStatic = true;
+    normState.interupt = false;
     normState.staticSet = false;
 }
 
@@ -44,9 +69,7 @@ void setDynamicColor(ColorPattern pattern) {
     PatternState& normState = state.interupt ? stateBuffer : state;
 
     // releasing old memory
-    delete normState.patern.colors;
-    delete normState.patern.pauseTimes;
-    delete normState.patern.transTimes;
+    clearStateMem(normState);
 
     // setting up the pattern
     normState.patern = pattern;
@@ -55,23 +78,58 @@ void setDynamicColor(ColorPattern pattern) {
     normState.curColor = 0;
     normState.curColorPlay = millis() + normState.patern.pauseTimes[0];
     normState.isStatic = false;
+    normState.interupt = false;
     normState.staticSet = false;
-
 }
 
-void setInterruptColor(ColorPattern color) {
+void setInteruptColor(ColorPattern pattern) {
+    if(!state.interupt){ copyState(state, stateBuffer); }
 
+    // setting up the pattern
+    state.patern = pattern;
+    
+    // resetting the state
+    state.curColor = 0;
+    state.curColorPlay = millis() + state.patern.pauseTimes[0];
+    state.isStatic = false;
+    state.interupt = true;
+    state.staticSet = false;
 }
 
-double getTimeDist(long now){
-    uint8_t curColorIndex  = state.curColor;
-    uint8_t nextColorIndex = ((state.curColor + 1) == state.patern.length) ? 0 : state.curColor;
+void setDefaultState() {
+    setDynamicColor({
+        3, 
+        new Color[3] {{10, 512, 0, 0}, {10, 0, 512, 0}, {10, 0, 0, 512}},
+        new unsigned long[3] {1000, 1000, 1000},
+        new unsigned long[3] {2000, 2000, 2000}
+    });
+}
 
-    Color curColor  = state.patern.colors[curColorIndex];
-    Color nextColor = state.patern.colors[nextColorIndex];
+/******************
+*    Apply State  *
+*******************/
 
-    double timeDist = ((double)now - (double)state.curColorPlay) / (double)state.patern.transTimes[curColorIndex];
-    return timeDist;
+void updateState() {
+    // The state cannot be updated is it's a static pattern
+    if(state.isStatic) { return; }
+
+    unsigned long changeTime = state.curColorPlay + state.patern.transTimes[state.curColor];
+
+    // The state is has not reach the next color
+    if(changeTime > millis()) { return; }
+
+    // Change back from interupt 
+    if((state.curColor + 1) == state.patern.length && state.interupt) {
+        clearStateMem(state);
+        copyState(stateBuffer, state);
+        return;
+    }
+
+    // updating the curent color
+    state.curColor = ((state.curColor + 1) == state.patern.length) ? 0 : state.curColor + 1;
+
+    // seting the next play time
+    state.curColorPlay = changeTime + state.patern.pauseTimes[state.curColor];
 }
 
 Color getMidColor(long now){
@@ -90,28 +148,6 @@ Color getMidColor(long now){
     };
 
     return midColor;
-}
-
-void setDefaultState() {
-    setStaticColor({8, 0, 255, 0});
-    updateState();
-    applyState();
-}
-
-void updateState() {
-    // The state cannot be updated is it's a static pattern
-    if(state.isStatic) { return; }
-
-    unsigned long changeTime = state.curColorPlay + state.patern.transTimes[state.curColor];
-
-    // The state is has not reach the next color
-    if(changeTime > millis()) { return; }
-
-    // updating the curent color
-    state.curColor = ((state.curColor + 1) == state.patern.length) ? 0 : state.curColor + 1;
-
-    // seting the next play time
-    state.curColorPlay = changeTime + state.patern.pauseTimes[state.curColor];
 }
 
 void applyState() {
@@ -135,29 +171,30 @@ void applyState() {
     setLeds(midColor);
 }
 
-String getStateString(){
+/******************
+* External Utils  *
+*******************/
+
+String getStateJson(){
     ColorPattern pattern = state.patern;
 
-    String message("Pattern:\n");
+    String message("{\"pattern\": [");
     for (uint8_t i = 0; i < pattern.length; i++) {
         Color color = pattern.colors[i];
-        String line = (
-            String("Color set to: (") + color.r + ',' + color.g + ',' + color.b + ',' + color.res + "b)" +
-            "\nPause for: " + pattern.pauseTimes[i] + "ms" +
-            "\nTransitioning for: " + pattern.transTimes[i] + "ms"
+        
+        message = (message +
+            "{\"color\": {\"r\":" + color.r + ", \"g\":" + color.g + ", \"b\":" + color.b + ", \"resolution\":" + color.res + "}," +
+            "\"pause\": " + pattern.pauseTimes[i] + "," +
+            "\"transition\": " + pattern.transTimes[i] + "}"
         );
-        message += line + '\n';
+
+        if(i < pattern.length - 1){ message += ",";}
     }
+    message += "],";
 
-    message += "\n==============\n";
-    message = message + "Static: " + state.isStatic + "\n";
-    message = message + "StaticSet: " + state.staticSet + "\n\n";
-
-    message = message + "interupt: " + state.interupt + "\n";
-    message = message + "curColor: " + state.curColor + "\n";
-    message = message + "curColorPlay: " + state.curColorPlay + "\n\n";
-
-    message = message + "now: " + millis() + "\n";
+    message = message + "\"static\": " + state.isStatic + ",";
+    message = message + "\"interupt\": " + state.interupt + ",";
+    message = message + "\"curColor\": " + state.curColor + "}";
 
     return message;
 }

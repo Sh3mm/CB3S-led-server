@@ -3,6 +3,7 @@
         "bitset": "cpp",
         "chrono": "cpp",
         "algorithm": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "new": "cpp"
     }
 }
