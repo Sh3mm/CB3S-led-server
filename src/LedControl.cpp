@@ -48,6 +48,7 @@ void setLedOn(){
 
 void setLedOff(){
     state.power = false;
+    state.staticSet = false;
     setLeds({8, 0, 0, 0});
 }
 
