@@ -109,7 +109,7 @@ void setInteruptColor(ColorPattern pattern) {
 void setDefaultState() {
     setDynamicColor({
         3, 
-        new Color[3] {{10, 512, 0, 0}, {10, 0, 512, 0}, {10, 0, 0, 512}},
+        new Color[3] {{10, 256, 0, 0}, {10, 0, 256, 0}, {10, 0, 0, 256}},
         new unsigned long[3] {1000, 1000, 1000},
         new unsigned long[3] {2000, 2000, 2000}
     });

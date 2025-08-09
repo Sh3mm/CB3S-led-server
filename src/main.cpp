@@ -21,7 +21,7 @@ void setup() {
 
     // Initial "No Connection" Color
     setLedOn();
-    setLeds({10, 512, 0, 0});
+    setLeds({10, 256, 0, 0});
     
     // Connection to Wifi
     WiFi.begin(WIFI_SSID, WIFI_PASS);
