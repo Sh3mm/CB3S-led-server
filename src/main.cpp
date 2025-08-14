@@ -2,6 +2,7 @@
 
 // HTTP Server
 WebServer server(80);
+WiFiServer socketServ(1221);
 
 Button2 onOffButton;
 
@@ -41,12 +42,13 @@ void setup() {
     server.on("/brightness", HTTP_POST, postBrightness);
 
     // POST Requests Callbacks (Specific Colors)
-    server.on("/white",          HTTP_POST, postWhite);
-    
+    server.on("/white", HTTP_POST, postWhite);
+
     // POST Requests Callbacks (LED Control)
-    server.on("/static_color",   HTTP_POST, postStaticColor);
-    server.on("/dynamic_color",  HTTP_POST, postDynamicColor);
-    server.on("/interupt_color", HTTP_POST, postInteruptColor);
+    server.on("/static_color",    HTTP_POST, postStaticColor);
+    server.on("/dynamic_color",   HTTP_POST, postDynamicColor);
+    server.on("/interupt_color",  HTTP_POST, postInteruptColor);
+    server.on("/default_color",   HTTP_POST, postDefaultColor);
 
     // HTTP Server Startup
     server.begin();

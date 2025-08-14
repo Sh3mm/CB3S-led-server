@@ -114,6 +114,11 @@ void postInteruptColor() {
     server.send(200, "application/json", getStateJson());
 }
 
+void postDefaultColor(){
+    setDefaultState();
+    server.send(200, "application/json", getStateJson());
+}
+
 
 void getState() {
     server.send(200, "application/json", getStateJson());
