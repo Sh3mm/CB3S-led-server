@@ -19,8 +19,11 @@ void setup() {
     analogWriteFrequency(ANALFRQ);
     analogWriteResolution(ANALRES);
 
-    // Initial "No Connection" Color
+    // LED setup
+    setBrightness(100);
     setLedOn();
+
+    // Initial "No Connection" Color
     setLeds({10, 256, 0, 0});
     
     // Connection to Wifi
@@ -28,15 +31,21 @@ void setup() {
     while (WiFi.status() != WL_CONNECTED) { delay(500); }
 
     // GET Requests Callbacks
-    server.on("/state", HTTP_GET, getState);
-    server.on("/power", HTTP_GET, getPowerState);
+    server.on("/state",      HTTP_GET, getState);
+    server.on("/power",      HTTP_GET, getPowerState);
+    server.on("/brightness", HTTP_GET, getBrightnessState);
 
-    // POST Requests Callbacks
-    server.on("/on", HTTP_POST, postOn);
-    server.on("/off", HTTP_POST, postOff);
-    server.on("/white", HTTP_POST, postWhite);
-    server.on("/static_color", HTTP_POST, postStaticColor);
-    server.on("/dynamic_color", HTTP_POST, postDynamicColor);
+    // POST Requests Callbacks (Power control)
+    server.on("/on",         HTTP_POST, postOn);
+    server.on("/off",        HTTP_POST, postOff);
+    server.on("/brightness", HTTP_POST, postBrightness);
+
+    // POST Requests Callbacks (Specific Colors)
+    server.on("/white",          HTTP_POST, postWhite);
+    
+    // POST Requests Callbacks (LED Control)
+    server.on("/static_color",   HTTP_POST, postStaticColor);
+    server.on("/dynamic_color",  HTTP_POST, postDynamicColor);
     server.on("/interupt_color", HTTP_POST, postInteruptColor);
 
     // HTTP Server Startup

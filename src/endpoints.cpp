@@ -17,30 +17,32 @@ long getLongParam(String name, long defaultVal = 0) {
 
 void postOn() {
     setLedOn();
-    server.send(200, "text/plain", "On");
+    server.send(200, "text/plain", getPowerJson());
 }
 
 void postOff() {
     setLedOff();
-    server.send(200, "text/plain", "Off");
+    server.send(200, "text/plain", getPowerJson());
+}
+
+void postBrightness(){
+    if(!server.hasArg("brightness")){
+        server.send(400, "text/plain", "Missing the 'brightness' parameter");
+        return;
+    }
+
+    uint8_t strength = server.arg("brightness").toInt();
+    if(0 >= strength && strength >= 100) {
+        server.send(400, "text/plain", "The 'brightness' parameter must be between 0 and 100");
+        return;
+    }
+
+    setBrightness(strength);
+    server.send(200, "application/json", getBrightnessJson());
 }
 
 void postWhite(){
-    if(!server.hasArg("strength")){
-        server.send(400, "text/plain", "Missing the 'strength' parameter");
-        return;
-    }
-
-    long strength = server.arg("strength").toInt();
-    if(0 >= strength && strength >= 100) {
-        server.send(400, "text/plain", "The 'strength' parameter must be between 0 and 100");
-        return;
-    }
-
-    long r = map(strength, 0, 100, 0, 1024);
-    long g = map(strength, 0, 100, 0,  461);
-    long b = map(strength, 0, 100, 0,  154);
-    setStaticColor({10, r, g, b});
+    setStaticColor({10, 1024, 461, 154});
     server.send(200, "application/json", getStateJson());
 }
 
@@ -119,4 +121,8 @@ void getState() {
 
 void getPowerState() {
     server.send(200, "application/json", getPowerJson());
+}
+
+void getBrightnessState() {
+    server.send(200, "application/json", getBrightnessJson());
 }

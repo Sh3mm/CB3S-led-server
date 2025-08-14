@@ -22,6 +22,10 @@ int mapValRes(int val, uint8_t in_res) {
     );
 }
 
+int mapValBrightness(int val, uint8_t brightness) {
+    return map(brightness, 0, 100, 0, val);
+}
+
 void copyState(PatternState& from, PatternState& to) {
         to.interupt     = false;
         to.staticSet    = false;
@@ -52,6 +56,10 @@ void setLedOff(){
     setLeds({8, 0, 0, 0});
 }
 
+void setBrightness(uint8_t brightness){
+    PatternState& normState = state.interupt ? stateBuffer : state;
+    normState.brightness = brightness;
+}
 /******************
 *  Pattern Change *
 *******************/
@@ -209,6 +217,7 @@ String getStateJson(){
     }
     message += "],";
 
+    message = message + "\"brightness\":  \"" + state.brightness + "%\",";
     message = message + "\"static\": " + state.isStatic + ",";
     message = message + "\"interupt\": " + state.interupt + ",";
     message = message + "\"curColor\": " + state.curColor + "}";
@@ -218,10 +227,13 @@ String getStateJson(){
 
 String getPowerJson() { return String() + "{\"power\":" + state.power + "}"; }
 
+String getBrightnessJson() { return String() + "{\"brightness\":" + state.brightness + "}"; }
+
+
 bool getPower() { return state.power; }
 
 void setLeds(Color color) {
-    analogWrite(R_PIN, mapValRes(color.r, color.res));
-    analogWrite(G_PIN, mapValRes(color.g, color.res));
-    analogWrite(B_PIN, mapValRes(color.b, color.res));
+    analogWrite(R_PIN, mapValBrightness(mapValRes(color.r, color.res), state.brightness));
+    analogWrite(G_PIN, mapValBrightness(mapValRes(color.g, color.res), state.brightness));
+    analogWrite(B_PIN, mapValBrightness(mapValRes(color.b, color.res), state.brightness));
 }

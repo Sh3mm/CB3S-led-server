@@ -23,6 +23,7 @@ struct PatternState {
     bool isStatic;               // If isStatic is true, the pattern is a static color and does not need to progress
     bool staticSet;              // If staticSet is true, the right color is already set. no need to aplly it each loop
 
+    uint8_t brightness;          // The brightness percentage. The color is multiplied by this value
     ColorPattern patern;         // The partern information about the currently running pattern
 
     uint8_t curColor;            // The cenrent color step
@@ -31,6 +32,7 @@ struct PatternState {
 
 void setLedOn();
 void setLedOff();
+void setBrightness(uint8_t brightness);
 
 // Pattern Change
 void setStaticColor(Color color);
@@ -41,6 +43,7 @@ void setDefaultState();
 // External Utils
 String getStateJson();
 String getPowerJson();
+String getBrightnessJson();
 
 bool getPower();
 void setLeds(Color color);
