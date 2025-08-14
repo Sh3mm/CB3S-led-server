@@ -34,6 +34,7 @@ void setup() {
     // POST Requests Callbacks
     server.on("/on", HTTP_POST, postOn);
     server.on("/off", HTTP_POST, postOff);
+    server.on("/white", HTTP_POST, postWhite);
     server.on("/static_color", HTTP_POST, postStaticColor);
     server.on("/dynamic_color", HTTP_POST, postDynamicColor);
     server.on("/interupt_color", HTTP_POST, postInteruptColor);

@@ -25,6 +25,25 @@ void postOff() {
     server.send(200, "text/plain", "Off");
 }
 
+void postWhite(){
+    if(!server.hasArg("strength")){
+        server.send(400, "text/plain", "Missing the 'strength' parameter");
+        return;
+    }
+
+    long strength = server.arg("strength").toInt();
+    if(0 >= strength && strength >= 100) {
+        server.send(400, "text/plain", "The 'strength' parameter must be between 0 and 100");
+        return;
+    }
+
+    long r = map(strength, 0, 100, 0, 1024);
+    long g = map(strength, 0, 100, 0,  461);
+    long b = map(strength, 0, 100, 0,  154);
+    setStaticColor({10, r, g, b});
+    server.send(200, "application/json", getStateJson());
+}
+
 void postStaticColor() {
 
     Color color;

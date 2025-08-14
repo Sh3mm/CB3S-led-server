@@ -10,6 +10,7 @@ extern WebServer server;
 
 void postOn();
 void postOff();
+void postWhite();
 void postStaticColor();
 void postDynamicColor();
 void postInteruptColor();

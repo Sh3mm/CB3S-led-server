@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Button2.h>
+#include <WiFiServer.h>
 
 #include "LedControl.h"
 #include "endpoints.h"
