@@ -19,15 +19,15 @@ struct ColorPattern {
 
 struct PatternState {
     bool power;
-    bool interupt;               // If interupt is true, once the pattern is finished, the old one will restart
-    bool isStatic;               // If isStatic is true, the pattern is a static color and does not need to progress
-    bool staticSet;              // If staticSet is true, the right color is already set. no need to aplly it each loop
+    bool interupt;              // If interupt is true, once the pattern is finished, the old one will restart
+    bool isStatic;              // If isStatic is true, the pattern is a static color and does not need to progress
+    bool staticSet;             // If staticSet is true, the right color is already set. no need to aplly it each loop
 
-    uint8_t brightness;          // The brightness percentage. The color is multiplied by this value
-    ColorPattern patern;         // The partern information about the currently running pattern
+    uint8_t brightness;         // The brightness percentage. The color is multiplied by this value
+    ColorPattern pattern;       // The partern information about the currently running pattern
 
-    uint8_t curColor;            // The cenrent color step
-    unsigned long curColorPlay;  // The time at which the next transition should start / started
+    uint8_t curColor;           // The cenrent color step
+    unsigned long curColorPlay; // The time at which the next transition should start / started
 };
 
 void setLedOn();
@@ -42,6 +42,7 @@ void setDefaultState();
 
 // External Utils
 String getStateJson();
+String getColorJson();
 String getPowerJson();
 String getBrightnessJson();
 

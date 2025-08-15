@@ -30,15 +30,15 @@ void copyState(PatternState& from, PatternState& to) {
         to.interupt     = false;
         to.staticSet    = false;
         to.isStatic     = from.isStatic;
-        to.patern       = from.patern;
+        to.pattern       = from.pattern;
         to.curColor     = from.curColor;
-        to.curColorPlay = millis() + to.patern.pauseTimes[state.curColor];
+        to.curColorPlay = millis() + to.pattern.pauseTimes[state.curColor];
 }
 
 void clearStateMem(PatternState& normState) {
-    delete normState.patern.colors;
-    delete normState.patern.pauseTimes;
-    delete normState.patern.transTimes;
+    delete normState.pattern.colors;
+    delete normState.pattern.pauseTimes;
+    delete normState.pattern.transTimes;
 }
 /******************
 *  Power Option   *
@@ -59,7 +59,9 @@ void setLedOff(){
 void setBrightness(uint8_t brightness){
     PatternState& normState = state.interupt ? stateBuffer : state;
     normState.brightness = brightness;
+    normState.staticSet = false;
 }
+
 /******************
 *  Pattern Change *
 *******************/
@@ -71,10 +73,10 @@ void setStaticColor(Color color) {
     clearStateMem(normState);
 
     // setting up the pattern
-    normState.patern.length = 1;
-    normState.patern.colors = new Color[1] {color,};
-    normState.patern.pauseTimes = new unsigned long[1] {0,};
-    normState.patern.transTimes = new unsigned long[1] {0,};
+    normState.pattern.length = 1;
+    normState.pattern.colors = new Color[1] {color,};
+    normState.pattern.pauseTimes = new unsigned long[1] {0,};
+    normState.pattern.transTimes = new unsigned long[1] {0,};
     
     // resetting the state
     normState.curColor = 0;
@@ -91,11 +93,11 @@ void setDynamicColor(ColorPattern pattern) {
     clearStateMem(normState);
 
     // setting up the pattern
-    normState.patern = pattern;
+    normState.pattern = pattern;
     
     // resetting the state
     normState.curColor = 0;
-    normState.curColorPlay = millis() + normState.patern.pauseTimes[0];
+    normState.curColorPlay = millis() + normState.pattern.pauseTimes[0];
     normState.isStatic = false;
     normState.interupt = false;
     normState.staticSet = false;
@@ -105,11 +107,11 @@ void setInteruptColor(ColorPattern pattern) {
     if(!state.interupt){ copyState(state, stateBuffer); }
 
     // setting up the pattern
-    state.patern = pattern;
+    state.pattern = pattern;
     
     // resetting the state
     state.curColor = 0;
-    state.curColorPlay = millis() + state.patern.pauseTimes[0];
+    state.curColorPlay = millis() + state.pattern.pauseTimes[0];
     state.isStatic = false;
     state.interupt = true;
     state.staticSet = false;
@@ -132,42 +134,41 @@ void updateState() {
     // The state cannot be updated is it's a static pattern
     if(state.isStatic) { return; }
 
-    unsigned long changeTime = state.curColorPlay + state.patern.transTimes[state.curColor];
+    unsigned long changeTime = state.curColorPlay + state.pattern.transTimes[state.curColor];
 
     // The state is has not reach the next color
     if(changeTime > millis()) { return; }
 
     // Change back from interupt 
-    if((state.curColor + 1) == state.patern.length && state.interupt) {
+    if((state.curColor + 1) == state.pattern.length && state.interupt) {
         clearStateMem(state);
         copyState(stateBuffer, state);
         return;
     }
 
     // updating the curent color
-    state.curColor = ((state.curColor + 1) == state.patern.length) ? 0 : state.curColor + 1;
+    state.curColor = ((state.curColor + 1) == state.pattern.length) ? 0 : state.curColor + 1;
 
     // seting the next play time
-    state.curColorPlay = changeTime + state.patern.pauseTimes[state.curColor];
+    state.curColorPlay = changeTime + state.pattern.pauseTimes[state.curColor];
 }
 
 Color getTransColor(long now){
     uint8_t curColorIndex  = state.curColor;
     // If the current color is the last one, the next one should be the first
-    uint8_t nextColorIndex = ((state.curColor + 1) == state.patern.length) ? 0 : state.curColor + 1;
+    uint8_t nextColorIndex = ((state.curColor + 1) == state.pattern.length) ? 0 : state.curColor + 1;
 
-    Color curColor  = state.patern.colors[curColorIndex];
-    Color nextColor = state.patern.colors[nextColorIndex];
+    Color curColor  = state.pattern.colors[curColorIndex];
+    Color nextColor = state.pattern.colors[nextColorIndex];
 
-    // The color ratio between the curent and next color: (now - transition change) / transition time
-    double timeDist = ((double)now - (double)state.curColorPlay) / (double)state.patern.transTimes[curColorIndex];
-    
-    // change the color in a linear maner: cur + (ratio * (next - cur))
+    unsigned long beg = state.curColorPlay;
+    unsigned long end = state.curColorPlay + state.pattern.transTimes[curColorIndex];
+
     Color midColor = {
         curColor.res,
-        curColor.r + (long)(timeDist * ((double)nextColor.r - (double)curColor.r)),
-        curColor.g + (long)(timeDist * ((double)nextColor.g - (double)curColor.g)),
-        curColor.b + (long)(timeDist * ((double)nextColor.b - (double)curColor.b)),
+        map(now, beg, end, curColor.r, nextColor.r),
+        map(now, beg, end, curColor.g, nextColor.g),
+        map(now, beg, end, curColor.b, nextColor.b),
     };
 
     return midColor;
@@ -179,7 +180,7 @@ void applyState() {
     
     // If the state is static and not set yet, set the color and return
     if(state.isStatic ) { 
-        setLeds(state.patern.colors[0]); 
+        setLeds(state.pattern.colors[0]); 
         state.staticSet = true;
         return;
     }
@@ -188,7 +189,7 @@ void applyState() {
 
     // The state is in a pause, set to the corect color and return
     if(state.curColorPlay > now) { 
-        setLeds(state.patern.colors[state.curColor]);
+        setLeds(state.pattern.colors[state.curColor]);
         return;
     }
 
@@ -201,7 +202,7 @@ void applyState() {
 *******************/
 
 String getStateJson(){
-    ColorPattern pattern = state.patern;
+    ColorPattern pattern = state.pattern;
 
     String message("{\"pattern\": [");
     for (uint8_t i = 0; i < pattern.length; i++) {
@@ -223,6 +224,14 @@ String getStateJson(){
     message = message + "\"curColor\": " + state.curColor + "}";
 
     return message;
+}
+
+String getColorJson(){
+    Color color = state.pattern.colors[state.curColor];
+    int r = mapValBrightness(mapValRes(color.r, color.res), state.brightness);
+    int g = mapValBrightness(mapValRes(color.g, color.res), state.brightness);
+    int b = mapValBrightness(mapValRes(color.b, color.res), state.brightness);
+    return String("{\"r\":") + r + ", \"g\":" + g + ", \"b\":" + b + ", \"resolution\":" + color.res + "}";
 }
 
 String getPowerJson() { return String() + "{\"power\":" + state.power + "}"; }

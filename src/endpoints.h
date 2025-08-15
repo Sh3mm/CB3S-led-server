@@ -13,12 +13,14 @@ void postOn();
 void postOff();
 void postBrightness();
 
-void postWhite();
+void postNamedColor();
+
 void postStaticColor();
 void postDynamicColor();
 void postInteruptColor();
 void postDefaultColor();
 
 void getState();
+void getColor();
 void getPowerState();
 void getBrightnessState();

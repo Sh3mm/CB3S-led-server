@@ -33,6 +33,7 @@ void setup() {
 
     // GET Requests Callbacks
     server.on("/state",      HTTP_GET, getState);
+    server.on("/color",      HTTP_GET, getColor);
     server.on("/power",      HTTP_GET, getPowerState);
     server.on("/brightness", HTTP_GET, getBrightnessState);
 
@@ -41,14 +42,12 @@ void setup() {
     server.on("/off",        HTTP_POST, postOff);
     server.on("/brightness", HTTP_POST, postBrightness);
 
-    // POST Requests Callbacks (Specific Colors)
-    server.on("/white", HTTP_POST, postWhite);
-
     // POST Requests Callbacks (LED Control)
-    server.on("/static_color",    HTTP_POST, postStaticColor);
-    server.on("/dynamic_color",   HTTP_POST, postDynamicColor);
-    server.on("/interupt_color",  HTTP_POST, postInteruptColor);
-    server.on("/default_color",   HTTP_POST, postDefaultColor);
+    server.on("/color/byname",   HTTP_POST, postNamedColor);
+    server.on("/color/static",   HTTP_POST, postStaticColor);
+    server.on("/color/dynamic",  HTTP_POST, postDynamicColor);
+    server.on("/color/interupt", HTTP_POST, postInteruptColor);
+    server.on("/color/default",  HTTP_POST, postDefaultColor);
 
     // HTTP Server Startup
     server.begin();

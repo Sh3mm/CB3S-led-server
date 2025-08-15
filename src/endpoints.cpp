@@ -32,7 +32,7 @@ void postBrightness(){
     }
 
     uint8_t strength = server.arg("brightness").toInt();
-    if(0 >= strength && strength >= 100) {
+    if(0 > strength || strength > 100) {
         server.send(400, "text/plain", "The 'brightness' parameter must be between 0 and 100");
         return;
     }
@@ -41,8 +41,25 @@ void postBrightness(){
     server.send(200, "application/json", getBrightnessJson());
 }
 
-void postWhite(){
-    setStaticColor({10, 1024, 461, 154});
+void postNamedColor(){
+    if (!server.hasArg("color")) {
+        server.send(400, "text/plain", "missing 'color' parameter");
+        return;
+    }
+
+    String name = server.arg("color");
+    // Color by name
+    if     (name == "white"  ) { setStaticColor({10, 1024,  461,  154}); } 
+    else if(name == "cyan"   ) { setStaticColor({10,    0, 1024,  342}); } 
+    else if(name == "magenta") { setStaticColor({10, 1024,    0,  154}); } 
+    else if(name == "yellow" ) { setStaticColor({10, 1024,  461,    0}); } 
+    else if(name == "red"    ) { setStaticColor({10, 1024,    0,    0}); } 
+    else if(name == "green"  ) { setStaticColor({10,    0, 1024,    0}); } 
+    else if(name == "blue"   ) { setStaticColor({10,    0,    0, 1024}); } 
+    else { // If the color is not part of the choices return an error
+        server.send(400, "text/plain", "Unknown color");
+        return;
+    }
     server.send(200, "application/json", getStateJson());
 }
 
@@ -122,6 +139,10 @@ void postDefaultColor(){
 
 void getState() {
     server.send(200, "application/json", getStateJson());
+}
+
+void getColor() {
+    server.send(200, "application/json", getColorJson());
 }
 
 void getPowerState() {
