@@ -7,7 +7,6 @@
 
 // The server is defined in main.cpp
 extern WebServer  server;
-extern WiFiServer socketServ;
 
 void postOn();
 void postOff();

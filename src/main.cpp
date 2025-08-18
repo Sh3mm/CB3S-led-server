@@ -2,7 +2,7 @@
 
 // HTTP Server
 WebServer server(80);
-WiFiServer socketServ(1221);
+WiFiServer socketServer(1221, 1);
 
 Button2 onOffButton;
 
@@ -12,30 +12,18 @@ void buttonClick(Button2& b){
 }
 
 void buttonLongClick(Button2& b){
-    setup();
+    setup(true);
 }
 
-void setup() {
-    // PWM Variables Setup
-    analogWriteFrequency(ANALFRQ);
-    analogWriteResolution(ANALRES);
-
-    // LED setup
-    setBrightness(100);
-    setLedOn();
-
-    // Initial "No Connection" Color
-    setLeds({10, 256, 0, 0});
-    
-    // Connection to Wifi
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-    while (WiFi.status() != WL_CONNECTED) { delay(500); }
-
+void httpServerSetup(){
     // GET Requests Callbacks
     server.on("/state",      HTTP_GET, getState);
     server.on("/color",      HTTP_GET, getColor);
     server.on("/power",      HTTP_GET, getPowerState);
     server.on("/brightness", HTTP_GET, getBrightnessState);
+
+    // GET request Tcp Socket connection
+    server.on("/socket", HTTP_GET, getSocketConnection);
 
     // POST Requests Callbacks (Power control)
     server.on("/on",         HTTP_POST, postOn);
@@ -51,6 +39,30 @@ void setup() {
 
     // HTTP Server Startup
     server.begin();
+}
+
+void setup(){ setup(false); }
+
+void setup(bool reset) {
+    // PWM Variables Setup
+    analogWriteFrequency(ANALFRQ);
+    analogWriteResolution(ANALRES);
+
+    // LED setup
+    setBrightness(100);
+    setLedOn();
+
+    // Initial "No Connection" Color
+    setLeds({10, 256, 0, 0});
+    
+    if(!reset){
+        // Connection to Wifi
+        WiFi.begin(WIFI_SSID, WIFI_PASS);
+        while (WiFi.status() != WL_CONNECTED) { delay(500); }
+
+        httpServerSetup();
+        socketServer.begin();
+    }
 
     // Button setup
     onOffButton.setTapHandler(buttonClick);
@@ -59,19 +71,25 @@ void setup() {
     
     onOffButton.begin(BUTTON_PIN);
 
-    // Seting default colors
-    setDefaultState();
+    // Seting colors & socket states
+    setDefaultColorState();
+    setDefaultSocketState();
 }
 
 
 void loop() {
-    // HTTP Updates
-    server.handleClient();
-    
-    // Color Change
-    updateState();
-    applyState();
+    if(!inSocketMode()){
+        // HTTP Updates
+        server.handleClient();
 
+        // Color Change
+        updateState();
+        applyState();
+    } else {
+        // Socket mode
+        handleSocket();
+    }
+ 
     // Button check
     onOffButton.loop();
 }

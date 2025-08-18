@@ -8,6 +8,8 @@ struct Color {
     long r;      // Red   componant
     long g;      // Green componant
     long b;      // Blue  componant
+
+    String json() {return String("{\"res\":") + res + ", \"r\": " + r + ", \"g\": " + g + ", \"b\": " + b + "}"; }
 };
 
 struct ColorPattern {
@@ -38,16 +40,18 @@ void setBrightness(uint8_t brightness);
 void setStaticColor(Color color);
 void setDynamicColor(ColorPattern color);
 void setInteruptColor(ColorPattern color);
-void setDefaultState();
+void setDefaultColorState();
 
 // External Utils
 String getStateJson();
 String getColorJson();
 String getPowerJson();
 String getBrightnessJson();
+void resetStatic();
 
 bool getPower();
 void setLeds(Color color);
+void setLeds(Color color, bool brightness);
 
 // Apply State
 void updateState();

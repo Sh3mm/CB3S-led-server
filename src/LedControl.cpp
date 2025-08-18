@@ -14,7 +14,7 @@ PatternState stateBuffer;
 
 template<typename T> T clamp(T val, T mn, T mx){ return std::max(std::min(val, mx), mn);}
 
-int mapValRes(int val, uint8_t in_res) {
+int _mapValRes(int val, uint8_t in_res) {
     return map(
         val,
         0, 2 << (in_res  - 1),
@@ -22,11 +22,11 @@ int mapValRes(int val, uint8_t in_res) {
     );
 }
 
-int mapValBrightness(int val, uint8_t brightness) {
+int _mapValBrightness(int val, uint8_t brightness) {
     return map(brightness, 0, 100, 0, val);
 }
 
-void copyState(PatternState& from, PatternState& to) {
+void _copyState(PatternState& from, PatternState& to) {
         to.interupt     = false;
         to.staticSet    = false;
         to.isStatic     = from.isStatic;
@@ -35,11 +35,18 @@ void copyState(PatternState& from, PatternState& to) {
         to.curColorPlay = millis() + to.pattern.pauseTimes[state.curColor];
 }
 
-void clearStateMem(PatternState& normState) {
+void _clearStateMem(PatternState& normState) {
     delete normState.pattern.colors;
     delete normState.pattern.pauseTimes;
     delete normState.pattern.transTimes;
 }
+
+void _setLeds(Color color, bool brightness=true) {
+    analogWrite(R_PIN, _mapValBrightness(_mapValRes(color.r, color.res), brightness ? state.brightness: 100));
+    analogWrite(G_PIN, _mapValBrightness(_mapValRes(color.g, color.res), brightness ? state.brightness: 100));
+    analogWrite(B_PIN, _mapValBrightness(_mapValRes(color.b, color.res), brightness ? state.brightness: 100));
+}
+
 /******************
 *  Power Option   *
 *******************/
@@ -53,7 +60,7 @@ void setLedOn(){
 void setLedOff(){
     state.power = false;
     state.staticSet = false;
-    setLeds({8, 0, 0, 0});
+    _setLeds({8, 0, 0, 0});
 }
 
 void setBrightness(uint8_t brightness){
@@ -70,7 +77,7 @@ void setStaticColor(Color color) {
     PatternState& normState = state.interupt ? stateBuffer : state;
 
     // releasing old memory
-    clearStateMem(normState);
+    _clearStateMem(normState);
 
     // setting up the pattern
     normState.pattern.length = 1;
@@ -90,7 +97,7 @@ void setDynamicColor(ColorPattern pattern) {
     PatternState& normState = state.interupt ? stateBuffer : state;
 
     // releasing old memory
-    clearStateMem(normState);
+    _clearStateMem(normState);
 
     // setting up the pattern
     normState.pattern = pattern;
@@ -104,7 +111,7 @@ void setDynamicColor(ColorPattern pattern) {
 }
 
 void setInteruptColor(ColorPattern pattern) {
-    if(!state.interupt){ copyState(state, stateBuffer); }
+    if(!state.interupt){ _copyState(state, stateBuffer); }
 
     // setting up the pattern
     state.pattern = pattern;
@@ -117,7 +124,7 @@ void setInteruptColor(ColorPattern pattern) {
     state.staticSet = false;
 }
 
-void setDefaultState() {
+void setDefaultColorState() {
     setDynamicColor({
         3, 
         new Color[3] {{10, 256, 0, 0}, {10, 0, 256, 0}, {10, 0, 0, 256}},
@@ -141,8 +148,8 @@ void updateState() {
 
     // Change back from interupt 
     if((state.curColor + 1) == state.pattern.length && state.interupt) {
-        clearStateMem(state);
-        copyState(stateBuffer, state);
+        _clearStateMem(state);
+        _copyState(stateBuffer, state);
         return;
     }
 
@@ -180,7 +187,7 @@ void applyState() {
     
     // If the state is static and not set yet, set the color and return
     if(state.isStatic ) { 
-        setLeds(state.pattern.colors[0]); 
+        _setLeds(state.pattern.colors[0]); 
         state.staticSet = true;
         return;
     }
@@ -189,12 +196,12 @@ void applyState() {
 
     // The state is in a pause, set to the corect color and return
     if(state.curColorPlay > now) { 
-        setLeds(state.pattern.colors[state.curColor]);
+        _setLeds(state.pattern.colors[state.curColor]);
         return;
     }
 
     // Set the led color to the correct transition color
-    setLeds(getTransColor(now));
+    _setLeds(getTransColor(now));
 }
 
 /******************
@@ -209,7 +216,7 @@ String getStateJson(){
         Color color = pattern.colors[i];
         
         message = (message +
-            "{\"color\": {\"r\":" + color.r + ", \"g\":" + color.g + ", \"b\":" + color.b + ", \"resolution\":" + color.res + "}," +
+            "{\"color\":" + color.json() + ',' +
             "\"pause\": " + pattern.pauseTimes[i] + "," +
             "\"transition\": " + pattern.transTimes[i] + "}"
         );
@@ -228,10 +235,10 @@ String getStateJson(){
 
 String getColorJson(){
     Color color = state.pattern.colors[state.curColor];
-    int r = mapValBrightness(mapValRes(color.r, color.res), state.brightness);
-    int g = mapValBrightness(mapValRes(color.g, color.res), state.brightness);
-    int b = mapValBrightness(mapValRes(color.b, color.res), state.brightness);
-    return String("{\"r\":") + r + ", \"g\":" + g + ", \"b\":" + b + ", \"resolution\":" + color.res + "}";
+    int r = _mapValBrightness(_mapValRes(color.r, color.res), state.brightness);
+    int g = _mapValBrightness(_mapValRes(color.g, color.res), state.brightness);
+    int b = _mapValBrightness(_mapValRes(color.b, color.res), state.brightness);
+    return color.json();
 }
 
 String getPowerJson() { return String() + "{\"power\":" + state.power + "}"; }
@@ -242,7 +249,13 @@ String getBrightnessJson() { return String() + "{\"brightness\":" + state.bright
 bool getPower() { return state.power; }
 
 void setLeds(Color color) {
-    analogWrite(R_PIN, mapValBrightness(mapValRes(color.r, color.res), state.brightness));
-    analogWrite(G_PIN, mapValBrightness(mapValRes(color.g, color.res), state.brightness));
-    analogWrite(B_PIN, mapValBrightness(mapValRes(color.b, color.res), state.brightness));
+    if(state.power) _setLeds(color);
+}
+
+void setLeds(Color color, bool brightness) {
+    if(state.power) _setLeds(color, brightness);
+}
+
+void resetStatic(){
+    state.staticSet = false;
 }
